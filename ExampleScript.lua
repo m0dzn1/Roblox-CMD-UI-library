@@ -1,97 +1,61 @@
---[[
-    CMD UI Library - Loadstring Usage Examples
-    
-    This shows different ways to load and use the CMD UI Library with loadstring
+--[[ 
+    CMD UI - Example Usage Script
+    Loads the library from your GitHub URL
 ]]
 
-local CMDUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/m0dzn1/Roblox-CMD-UI-library/refs/heads/main/CMDUILibrary.lua"))()
+-- 1. Load the Library
+local CMDUI = loadstring(game:HttpGet("https://github.com/m0dzn1/Roblox-CMD-UI-library/raw/refs/heads/main/CMDUILibrary.lua"))()
 
--- Create UI
-local cmdUI = CMDUI.new("Example App")
-cmdUI:WaitForReady()
-
--- Use it like normal
-cmdUI:Print("Welcome!")
-cmdUI:Print("")
-
-local choice = cmdUI:SelectByNumber(
-    "What would you like to do?",
-    {
-        "Option 1",
-        "Option 2",
-        "Option 3"
-    }
-)
-
-cmdUI:Print("You selected option " .. choice)
-
-local confirm = cmdUI:Confirm("Continue?")
-
-if confirm then
-    local name = cmdUI:Input("What's your name?", "string")
-    cmdUI:Print("Hello, " .. name .. "!")
-else
-    cmdUI:Print("Goodbye!")
+if not CMDUI then
+    warn("Failed to load CMD UI Library. Check the URL.")
+    return
 end
 
-task.wait(2)
-cmdUI:Destroy()
+-- 2. Run the Boot Sequence 
+-- (Rainbow text, Loading bar 1-2s, Clear screen)
+CMDUI:BootSequence()
 
+-- 3. Set your Script Title
+-- This appears in the top header and changes the window title
+local ScriptTitle = "M0DZN HUB v1"
+CMDUI:SetTitle(ScriptTitle)
 
--- ============================================================================
--- ERROR HANDLING (Recommended)
--- ============================================================================
+-- 4. Example: Selection Menu (SelectByNumber)
+CMDUI:Print("Welcome user. Initializing resources...")
+task.wait(0.5)
 
-local success, CMDUI = pcall(function()
-    return loadstring(game:HttpGet("YOUR_URL_HERE"))()
-end)
+local choiceIdx, choiceName = CMDUI:SelectByNumber("Select Exploit Mode:", {
+    [1] = "Legit Farm",
+    [2] = "Rage Farm",
+    [3] = "Teleport",
+    [4] = "ESP Only"
+})
 
-if success then
-    local cmdUI = CMDUI.new("My App")
-    cmdUI:WaitForReady()
-    cmdUI:Print("Loaded successfully!")
+CMDUI:Print(">> Mode Selected: " .. choiceName, Color3.fromRGB(0, 255, 0))
+task.wait(1)
+
+-- 5. Example: Confirmation (Confirm)
+local useSafeMode = CMDUI:Confirm("Enable Safe Mode (Anti-Ban)?")
+
+if useSafeMode then
+    CMDUI:Print(">> Safe Mode: ACTIVE", Color3.fromRGB(0, 255, 0))
 else
-    warn("Failed to load CMD UI Library:", CMDUI)
+    CMDUI:Print(">> Safe Mode: OFF (Risky)", Color3.fromRGB(255, 50, 50))
 end
 
+-- 6. Example: Value Input (Input)
+local walkspeed = CMDUI:Input("Set WalkSpeed Value (Default 16):")
 
--- ============================================================================
--- LOADING WITH CUSTOM SETTINGS
--- ============================================================================
+if tonumber(walkspeed) then
+    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(walkspeed)
+        CMDUI:Print(">> WalkSpeed updated to " .. walkspeed, Color3.fromRGB(0, 255, 0))
+    else
+        CMDUI:Print(">> Character not found.", Color3.fromRGB(255, 0, 0))
+    end
+else
+    CMDUI:Print(">> Invalid Number.", Color3.fromRGB(255, 0, 0))
+end
 
-local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
-
--- You can create multiple instances
-local mainMenu = CMDUI.new("Main Menu")
-local settings = CMDUI.new("Settings")
-local shop = CMDUI.new("Shop")
-
--- Wait for all to be ready
-mainMenu:WaitForReady()
-settings:WaitForReady()
-shop:WaitForReady()
-
-
--- ============================================================================
--- NOTES & TIPS
--- ============================================================================
-
---[[
-    IMPORTANT:
-    - Make sure HTTP requests are enabled in your game
-    - Go to Game Settings > Security > Allow HTTP Requests = ON
-    - The URL must be a direct link to the raw code
-    - Don't use shortened URLs (bit.ly, etc.) - Roblox blocks them
-    
-    RECOMMENDED HOSTING:
-    1. GitHub (Free, reliable, easy)
-    2. Pastebin (Free, but pastes may expire)
-    3. paste.ee (Free alternative)
-    4. Your own server (Most control)
-    
-    GITHUB RAW URL FORMAT:
-    https://raw.githubusercontent.com/USERNAME/REPOSITORY/BRANCH/FILE.lua
-    
-    Example:
-    https://raw.githubusercontent.com/m0dzn/cmdui/main/CMDUILibrary_Loadstring.lua
-]]
+CMDUI:Print("------------------------")
+CMDUI:Print("System Ready.")
