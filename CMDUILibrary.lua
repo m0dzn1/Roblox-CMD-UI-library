@@ -1,341 +1,267 @@
--- CMD UI Library - Loadstring Version
--- Usage: local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
--- Made by m0dzn
-
-local CMDUILibrary = {}
-CMDUILibrary.__index = CMDUILibrary
-
--- Services
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-
--- Constants
-local BACKGROUND_COLOR = Color3.new(0, 0, 0)
-local TEXT_COLOR = Color3.fromRGB(0, 204, 0)
-local FONT = Enum.Font.Code
-local TITLE_BAR_HEIGHT = 30
-local WINDOW_SIZE = UDim2.new(0, 800, 0, 600)
-
--- ASCII Art
-local ASCII_ART = [[
-  ██████╗███╗   ███╗██████╗     ██╗   ██╗██╗
- ██╔════╝████╗ ████║██╔══██╗    ██║   ██║██║
- ██║     ██╔████╔██║██║  ██║    ██║   ██║██║
- ██║     ██║╚██╔╝██║██║  ██║    ██║   ██║██║
- ╚██████╗██║ ╚═╝ ██║██████╔╝    ╚██████╔╝██║
-  ╚═════╝╚═╝     ╚═╝╚═════╝      ╚═════╝ ╚═╝
-                                            
-           made by m0dzn
+--[[ 
+    CMD UI Library 
+    Style: Windows Command Prompt (101% Accurate)
+    Author: m0dzn (Generated via Assistance)
 ]]
 
-function CMDUILibrary.new(title)
-    local self = setmetatable({}, CMDUILibrary)
-    self.Title = title or "CMD"
-    self.IsReady = false
-    self.CurrentInput = nil
-    self.InputConnection = nil
-    self:CreateUI()
-    task.spawn(function() self:BootSequence() end)
-    return self
-end
+local Library = {}
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
 
-function CMDUILibrary:CreateUI()
-    local player = Players.LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
-    
-    self.ScreenGui = Instance.new("ScreenGui")
-    self.ScreenGui.Name = "CMDUI"
-    self.ScreenGui.ResetOnSpawn = false
-    self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    self.ScreenGui.Parent = playerGui
-    
-    self.MainFrame = Instance.new("Frame")
-    self.MainFrame.Name = "Window"
-    self.MainFrame.Size = WINDOW_SIZE
-    self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    self.MainFrame.BackgroundColor3 = BACKGROUND_COLOR
-    self.MainFrame.BorderSizePixel = 2
-    self.MainFrame.BorderColor3 = Color3.fromRGB(128, 128, 128)
-    self.MainFrame.Parent = self.ScreenGui
-    
-    self.TitleBar = Instance.new("Frame")
-    self.TitleBar.Name = "TitleBar"
-    self.TitleBar.Size = UDim2.new(1, 0, 0, TITLE_BAR_HEIGHT)
-    self.TitleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
-    self.TitleBar.BorderSizePixel = 0
-    self.TitleBar.Parent = self.MainFrame
-    
-    self.TitleLabel = Instance.new("TextLabel")
-    self.TitleLabel.Name = "Title"
-    self.TitleLabel.Size = UDim2.new(1, -10, 1, 0)
-    self.TitleLabel.Position = UDim2.new(0, 5, 0, 0)
-    self.TitleLabel.BackgroundTransparency = 1
-    self.TitleLabel.Text = self.Title
-    self.TitleLabel.TextColor3 = Color3.new(1, 1, 1)
-    self.TitleLabel.Font = FONT
-    self.TitleLabel.TextSize = 14
-    self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.TitleLabel.Parent = self.TitleBar
-    
-    self.ContentFrame = Instance.new("ScrollingFrame")
-    self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, -10, 1, -TITLE_BAR_HEIGHT - 10)
-    self.ContentFrame.Position = UDim2.new(0, 5, 0, TITLE_BAR_HEIGHT + 5)
-    self.ContentFrame.BackgroundColor3 = BACKGROUND_COLOR
-    self.ContentFrame.BorderSizePixel = 0
-    self.ContentFrame.ScrollBarThickness = 10
-    self.ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    self.ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    self.ContentFrame.Parent = self.MainFrame
-    
-    self.ContentLayout = Instance.new("UIListLayout")
-    self.ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    self.ContentLayout.Padding = UDim.new(0, 0)
-    self.ContentLayout.Parent = self.ContentFrame
-    
-    self:MakeDraggable()
-end
+-- Constants
+local FONT = Enum.Font.Code -- Closest to Consolas/Lucida Console
+local TEXT_SIZE = 16
+local BG_COLOR = Color3.fromRGB(12, 12, 12) -- standard cmd black
+local TEXT_COLOR = Color3.fromRGB(204, 204, 204) -- standard cmd grey/white
+local RAINBOW_SPEED = 5
 
-function CMDUILibrary:MakeDraggable()
-    local dragging = false
-    local dragInput, mousePos, framePos
-    
-    self.TitleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            mousePos = input.Position
-            framePos = self.MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    self.TitleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - mousePos
-            self.MainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-        end
-    end)
-end
+-- UI State
+local ScreenGui
+local MainFrame
+local ConsoleLog
+local InputBox
+local TitleBarText
 
-function CMDUILibrary:BootSequence()
-    local startTime = tick()
-    local loadTime = math.random(1000, 2000) / 1000
-    local asciiLabel = self:CreateRainbowText(ASCII_ART, 12)
-    local loadingLabel = self:CreateText("UI Loading [                    ] 0%", TEXT_COLOR)
-    local steps = 20
-    local stepTime = loadTime / steps
-    
-    for i = 1, steps do
-        local progress = i / steps
-        local filled = math.floor(progress * 20)
-        local bar = string.rep("#", filled) .. string.rep(" ", 20 - filled)
-        local percentage = math.floor(progress * 100)
-        loadingLabel.Text = string.format("UI Loading [%s] %d%%", bar, percentage)
-        task.wait(stepTime)
+-- Helper: Create UI Instance
+local function create(className, properties, children)
+    local obj = Instance.new(className)
+    for k, v in pairs(properties) do obj[k] = v end
+    if children then
+        for _, child in pairs(children) do child.Parent = obj end
     end
-    
-    local actualTime = tick() - startTime
-    local completionLabel = self:CreateText(string.format("Load UI in %.3f sec", actualTime), TEXT_COLOR)
-    task.wait(0.5)
-    self:Clear()
-    self:ShowMainInterface()
-    self.IsReady = true
+    return obj
 end
 
-function CMDUILibrary:CreateRainbowText(text, textSize)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = FONT
-    label.TextSize = textSize or 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextYAlignment = Enum.TextYAlignment.Top
-    label.AutomaticSize = Enum.AutomaticSize.Y
-    label.Parent = self.ContentFrame
-    
+-- Helper: Get Rainbow Color
+local function getRainbowGradient()
     local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new{
+    gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 127, 0)),
-        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
-        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75, 0, 130)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(148, 0, 211))
-    }
-    gradient.Parent = label
+        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 127, 0)),
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(139, 0, 255))
+    })
+    return gradient
+end
+
+function Library:Init()
+    -- Protect GUI (If using Synapse/Krnl/etc use proper protection, otherwise Parent to PlayerGui)
+    local parent = CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
     
-    task.spawn(function()
-        while label.Parent do
-            for i = 0, 1, 0.01 do
-                gradient.Offset = Vector2.new(i, 0)
-                task.wait(0.03)
-            end
-        end
-    end)
+    -- cleanup old
+    if parent:FindFirstChild("CMD_UI_m0dzn") then parent["CMD_UI_m0dzn"]:Destroy() end
+
+    ScreenGui = create("ScreenGui", {Name = "CMD_UI_m0dzn", Parent = parent, ResetOnSpawn = false, IgnoreGuiInset = true})
     
-    return label
+    MainFrame = create("Frame", {
+        Name = "Window",
+        Parent = ScreenGui,
+        BackgroundColor3 = BG_COLOR,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, -300, 0.5, -200),
+        Size = UDim2.new(0, 600, 0, 400),
+        Active = true,
+        Draggable = true
+    })
+
+    -- Title Bar (Visual only to look like window)
+    local TitleBar = create("Frame", {
+        Parent = MainFrame,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Size = UDim2.new(1, 0, 0, 25),
+        BorderSizePixel = 0
+    })
+    
+    TitleBarText = create("TextLabel", {
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        Font = FONT,
+        Text = "Administrator: CMD",
+        TextColor3 = Color3.new(0,0,0),
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    -- Console Area
+    ConsoleLog = create("ScrollingFrame", {
+        Parent = MainFrame,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 5, 0, 30),
+        Size = UDim2.new(1, -10, 1, -35),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 6,
+        ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    })
+    
+    create("UIListLayout", {
+        Parent = ConsoleLog,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 2)
+    })
+
+    -- Input Box (Hidden, captures focus)
+    InputBox = create("TextBox", {
+        Parent = MainFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 0, 0, 0), -- Hidden
+        Text = "",
+        Font = FONT,
+        TextSize = TEXT_SIZE
+    })
 end
 
-function CMDUILibrary:CreateText(text, color)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = color or TEXT_COLOR
-    label.Font = FONT
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextYAlignment = Enum.TextYAlignment.Top
-    label.AutomaticSize = Enum.AutomaticSize.Y
-    label.Parent = self.ContentFrame
-    return label
-end
-
-function CMDUILibrary:ShowMainInterface()
-    self:CreateText("\n" .. string.rep(" ", 10) .. self.Title, TEXT_COLOR)
-    self:CreateText(string.rep("-", 50), TEXT_COLOR)
-    self:CreateText("", TEXT_COLOR)
-end
-
-function CMDUILibrary:Clear()
-    for _, child in ipairs(self.ContentFrame:GetChildren()) do
-        if child:IsA("TextLabel") or child:IsA("TextBox") then
-            child:Destroy()
-        end
+function Library:Print(text, color, isRainbow)
+    local label = create("TextLabel", {
+        Parent = ConsoleLog,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, TEXT_SIZE),
+        Font = FONT,
+        Text = text,
+        TextColor3 = color or TEXT_COLOR,
+        TextSize = TEXT_SIZE,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        RichText = true
+    })
+    
+    if isRainbow then
+        local grad = getRainbowGradient()
+        grad.Parent = label
     end
+
+    -- Auto scroll
+    ConsoleLog.CanvasSize = UDim2.new(0, 0, 0, ConsoleLog.UIListLayout.AbsoluteContentSize.Y)
+    ConsoleLog.CanvasPosition = Vector2.new(0, ConsoleLog.UIListLayout.AbsoluteContentSize.Y)
+    return label
 end
 
-function CMDUILibrary:SetTitle(newTitle)
-    self.Title = newTitle
-    self.TitleLabel.Text = newTitle
-    self:Clear()
-    self:ShowMainInterface()
+function Library:Clear()
+    for _, v in pairs(ConsoleLog:GetChildren()) do
+        if v:IsA("TextLabel") then v:Destroy() end
+    end
+    ConsoleLog.CanvasSize = UDim2.new(0,0,0,0)
 end
 
-function CMDUILibrary:Print(text, color)
-    self:CreateText(text, color or TEXT_COLOR)
-    self.ContentFrame.CanvasPosition = Vector2.new(0, self.ContentFrame.AbsoluteCanvasSize.Y)
+function Library:SetTitle(titleName)
+    TitleBarText.Text = "Administrator: " .. titleName
+    Library:Print(titleName, TEXT_COLOR)
+    Library:Print("------------------------", TEXT_COLOR)
 end
 
-function CMDUILibrary:WaitForInput(prompt)
-    self:Print(prompt)
-    local inputBox = Instance.new("TextBox")
-    inputBox.Size = UDim2.new(1, -5, 0, 20)
-    inputBox.BackgroundColor3 = BACKGROUND_COLOR
-    inputBox.BorderSizePixel = 0
-    inputBox.Text = ""
-    inputBox.TextColor3 = TEXT_COLOR
-    inputBox.Font = FONT
-    inputBox.TextSize = 14
-    inputBox.TextXAlignment = Enum.TextXAlignment.Left
-    inputBox.ClearTextOnFocus = false
-    inputBox.Parent = self.ContentFrame
-    task.wait(0.1)
-    inputBox:CaptureFocus()
+-- The "Yielding" Input Function
+function Library:Input(promptText)
+    -- Display prompt
+    local promptLine = Library:Print(promptText, TEXT_COLOR)
     
-    local result = nil
+    InputBox.Text = ""
+    InputBox:CaptureFocus()
+    
+    local finished = false
+    local result = ""
+    
+    -- Visual Cursor logic
     local connection
-    connection = inputBox.FocusLost:Connect(function(enterPressed)
+    connection = InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+        promptLine.Text = promptText .. InputBox.Text .. "_"
+    end)
+    
+    local enterConnection
+    enterConnection = InputBox.FocusLost:Connect(function(enterPressed)
         if enterPressed then
-            result = inputBox.Text
-            inputBox:Destroy()
-            connection:Disconnect()
+            finished = true
+            result = InputBox.Text
+            promptLine.Text = promptText .. result -- Remove cursor
         else
-            inputBox:CaptureFocus()
+            -- If they clicked away, force focus back until they hit enter? 
+            -- For UX, we usually let them click away, but for accuracy we keep focus.
+            InputBox:CaptureFocus() 
         end
     end)
     
-    while result == nil do task.wait(0.1) end
-    self:Print("> " .. result, Color3.fromRGB(0, 255, 0))
+    repeat task.wait() until finished
+    
+    connection:Disconnect()
+    enterConnection:Disconnect()
+    
     return result
 end
 
-function CMDUILibrary:SelectByNumber(prompt, options)
-    if type(options) ~= "table" or #options == 0 then
-        error("Options must be a non-empty table")
+function Library:SelectByNumber(prompt, options)
+    Library:Print(prompt)
+    for i, v in pairs(options) do
+        Library:Print("["..i.."] " .. v)
     end
     
-    self:Print("")
-    self:Print(prompt)
-    for i, option in ipairs(options) do
-        self:Print(string.format("  [%d] %s", i, option))
+    while true do
+        local res = Library:Input("Type number to select: ")
+        local num = tonumber(res)
+        if num and options[num] then
+            return num, options[num]
+        else
+            Library:Print("Invalid selection.", Color3.fromRGB(255, 50, 50))
+        end
     end
-    self:Print("")
+end
+
+function Library:Confirm(prompt)
+    while true do
+        local res = Library:Input(prompt .. " (Y/N): ")
+        if res:lower() == "y" or res:lower() == "yes" then
+            return true
+        elseif res:lower() == "n" or res:lower() == "no" then
+            return false
+        else
+            Library:Print("Please type Y or N.", Color3.fromRGB(255, 50, 50))
+        end
+    end
+end
+
+function Library:BootSequence()
+    Library:Init()
     
-    local input = nil
-    while input == nil do
-        local rawInput = self:WaitForInput("Type number to select: ")
-        local num = tonumber(rawInput)
-        if num and num >= 1 and num <= #options then
-            input = num
-        else
-            self:Print("Invalid selection. Please try again.", Color3.fromRGB(255, 0, 0))
-        end
+    -- 1. Rainbow ASCII
+    local ascii = [[
+  ____ __  __ ____     _   _ ___ 
+ / ___|  \/  |  _ \   | | | |_ _|
+| |   | |\/| | | | |  | | | || | 
+| |___| |  | | |_| |  | |_| || | 
+ \____|_|  |_|____/    \___/|___|
+                                 
+      made by m0dzn
+]]
+    local logo = Library:Print(ascii, Color3.new(1,1,1), true)
+    logo.Size = UDim2.new(1, 0, 0, 130) -- Adjust for ASCII height
+    
+    -- 2. Loading Bar
+    local loadTime = math.random(1000, 2000) / 1000 -- 1.0 to 2.0 seconds
+    local startTime = tick()
+    local loadingLine = Library:Print("UI Loading [                  ] 0%")
+    
+    while (tick() - startTime) < loadTime do
+        local elapsed = tick() - startTime
+        local progress = math.clamp(elapsed / loadTime, 0, 1)
+        local percent = math.floor(progress * 100)
+        
+        local hashes = math.floor(progress * 20) -- 20 chars bar
+        local barStr = string.rep("#", hashes) .. string.rep(" ", 20 - hashes)
+        
+        loadingLine.Text = string.format("UI Loading [%s] %d%%", barStr, percent)
+        task.wait()
     end
     
-    return input, options[input]
+    loadingLine.Text = string.format("UI Loading [%s] 100%%", string.rep("#", 20))
+    Library:Print("Load UI in " .. string.format("%.3f", loadTime) .. " sec")
+    
+    -- 3. Transition
+    task.wait(3)
+    Library:Clear()
 end
 
-function CMDUILibrary:Confirm(prompt)
-    self:Print("")
-    self:Print(prompt)
-    local result = nil
-    while result == nil do
-        local input = self:WaitForInput("Type Y/N: ")
-        local lower = string.lower(input)
-        if lower == "y" or lower == "yes" then
-            result = true
-        elseif lower == "n" or lower == "no" then
-            result = false
-        else
-            self:Print("Invalid input. Please type Y or N.", Color3.fromRGB(255, 0, 0))
-        end
-    end
-    return result
-end
-
-function CMDUILibrary:Input(prompt, inputType)
-    self:Print("")
-    self:Print(prompt)
-    local result = nil
-    while result == nil do
-        local input = self:WaitForInput((inputType == "number" and "Type number to set value: ") or "Type value: ")
-        if inputType == "number" then
-            local num = tonumber(input)
-            if num then
-                result = num
-            else
-                self:Print("Invalid number. Please try again.", Color3.fromRGB(255, 0, 0))
-            end
-        else
-            result = input
-        end
-    end
-    return result
-end
-
-function CMDUILibrary:WaitForReady()
-    while not self.IsReady do task.wait(0.1) end
-end
-
-function CMDUILibrary:Destroy()
-    if self.InputConnection then self.InputConnection:Disconnect() end
-    if self.ScreenGui then self.ScreenGui:Destroy() end
-end
-
-return CMDUILibrary
+return Library
