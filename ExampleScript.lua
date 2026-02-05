@@ -1,129 +1,97 @@
 --[[
-    CMD UI Library - Example Usage
+    CMD UI Library - Loadstring Usage Examples
     
-    This script demonstrates how to use the CMD UI Library
-    Place this in StarterPlayer > StarterPlayerScripts or StarterGui
+    This shows different ways to load and use the CMD UI Library with loadstring
 ]]
 
--- Require the library (adjust the path to where you put the ModuleScript)
-local CMDUILibrary = require(game.ReplicatedStorage:WaitForChild("CMDUILibrary"))
+local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
 
--- Create new CMD UI instance
-local cmdUI = CMDUILibrary.new("My Application")
-
--- Wait for the boot sequence to complete
+-- Create UI
+local cmdUI = CMDUI.new("Example App")
 cmdUI:WaitForReady()
 
--- Now you can use all the functions!
+-- Use it like normal
+cmdUI:Print("Welcome!")
+cmdUI:Print("")
 
--- Example 1: Print some text
-cmdUI:Print("Welcome to CMD UI Library!")
-cmdUI:Print("This is a demonstration of all features.")
-task.wait(1)
-
--- Example 2: Change the title
-cmdUI:SetTitle("DEMO PROGRAM")
-task.wait(0.5)
-
--- Example 3: Use SelectByNumber
-local choice, selectedOption = cmdUI:SelectByNumber(
+local choice = cmdUI:SelectByNumber(
     "What would you like to do?",
     {
-        "View System Info",
-        "Run Calculation",
-        "Change Settings",
-        "Exit Program"
+        "Option 1",
+        "Option 2",
+        "Option 3"
     }
 )
 
-cmdUI:Print("")
-cmdUI:Print("You selected: " .. selectedOption)
-task.wait(1)
+cmdUI:Print("You selected option " .. choice)
 
--- Example 4: Use Confirm (Y/N)
-if choice == 2 then
-    cmdUI:Print("")
-    cmdUI:Print("Let's do some math!")
-    
-    local num1 = cmdUI:Input("Enter first number:", "number")
-    local num2 = cmdUI:Input("Enter second number:", "number")
-    
-    local operations = cmdUI:SelectByNumber(
-        "Select operation:",
-        {
-            "Addition (+)",
-            "Subtraction (-)",
-            "Multiplication (*)",
-            "Division (/)"
-        }
-    )
-    
-    local result
-    if operations == 1 then
-        result = num1 + num2
-    elseif operations == 2 then
-        result = num1 - num2
-    elseif operations == 3 then
-        result = num1 * num2
-    elseif operations == 4 then
-        result = num1 / num2
-    end
-    
-    cmdUI:Print("")
-    cmdUI:Print(string.format("Result: %.2f", result), Color3.fromRGB(0, 255, 255))
-end
+local confirm = cmdUI:Confirm("Continue?")
 
--- Example 5: General text input
-task.wait(1)
-cmdUI:Print("")
-local userName = cmdUI:Input("What is your name?", "string")
-cmdUI:Print("")
-cmdUI:Print("Hello, " .. userName .. "! Nice to meet you!")
-
--- Example 6: Final confirmation
-task.wait(1)
-local shouldExit = cmdUI:Confirm("Do you want to exit the program?")
-
-if shouldExit then
-    cmdUI:Print("")
-    cmdUI:Print("Goodbye! Thanks for using CMD UI Library.", Color3.fromRGB(255, 255, 0))
-    task.wait(2)
-    cmdUI:Destroy()
+if confirm then
+    local name = cmdUI:Input("What's your name?", "string")
+    cmdUI:Print("Hello, " .. name .. "!")
 else
-    cmdUI:Print("")
-    cmdUI:Print("Program will continue running...")
-    cmdUI:Print("You can close the window manually.")
+    cmdUI:Print("Goodbye!")
 end
+
+task.wait(2)
+cmdUI:Destroy()
+
+
+-- ============================================================================
+-- ERROR HANDLING (Recommended)
+-- ============================================================================
+
+local success, CMDUI = pcall(function()
+    return loadstring(game:HttpGet("YOUR_URL_HERE"))()
+end)
+
+if success then
+    local cmdUI = CMDUI.new("My App")
+    cmdUI:WaitForReady()
+    cmdUI:Print("Loaded successfully!")
+else
+    warn("Failed to load CMD UI Library:", CMDUI)
+end
+
+
+-- ============================================================================
+-- LOADING WITH CUSTOM SETTINGS
+-- ============================================================================
+
+local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
+
+-- You can create multiple instances
+local mainMenu = CMDUI.new("Main Menu")
+local settings = CMDUI.new("Settings")
+local shop = CMDUI.new("Shop")
+
+-- Wait for all to be ready
+mainMenu:WaitForReady()
+settings:WaitForReady()
+shop:WaitForReady()
+
+
+-- ============================================================================
+-- NOTES & TIPS
+-- ============================================================================
 
 --[[
-    AVAILABLE METHODS:
+    IMPORTANT:
+    - Make sure HTTP requests are enabled in your game
+    - Go to Game Settings > Security > Allow HTTP Requests = ON
+    - The URL must be a direct link to the raw code
+    - Don't use shortened URLs (bit.ly, etc.) - Roblox blocks them
     
-    cmdUI:SetTitle(string)
-    - Updates the window title and header
+    RECOMMENDED HOSTING:
+    1. GitHub (Free, reliable, easy)
+    2. Pastebin (Free, but pastes may expire)
+    3. paste.ee (Free alternative)
+    4. Your own server (Most control)
     
-    cmdUI:Print(text, color?)
-    - Prints text to the console
-    - Color is optional (defaults to CMD green)
+    GITHUB RAW URL FORMAT:
+    https://raw.githubusercontent.com/USERNAME/REPOSITORY/BRANCH/FILE.lua
     
-    cmdUI:SelectByNumber(prompt, options)
-    - Shows numbered list and waits for selection
-    - Returns: selectedIndex, selectedValue
-    
-    cmdUI:Confirm(prompt)
-    - Shows Y/N prompt
-    - Returns: boolean (true for Yes, false for No)
-    
-    cmdUI:Input(prompt, inputType?)
-    - General input field
-    - inputType can be "number" or "string" (default: "string")
-    - Returns: the input value
-    
-    cmdUI:Clear()
-    - Clears all content from the console
-    
-    cmdUI:WaitForReady()
-    - Waits until the boot sequence is complete
-    
-    cmdUI:Destroy()
-    - Closes and removes the UI
+    Example:
+    https://raw.githubusercontent.com/m0dzn/cmdui/main/CMDUILibrary_Loadstring.lua
 ]]
