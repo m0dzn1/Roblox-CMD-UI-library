@@ -1,14 +1,6 @@
---[[
-    CMD UI Library for Roblox
-    Made by m0dzn
-    
-    A 100% accurate Windows CMD-style UI library
-    Features:
-    - Rainbow ASCII art boot screen
-    - Dynamic loading animation (1-2 seconds)
-    - Interactive input methods
-    - Customizable title and branding
-]]
+-- CMD UI Library - Loadstring Version
+-- Usage: local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
+-- Made by m0dzn
 
 local CMDUILibrary = {}
 CMDUILibrary.__index = CMDUILibrary
@@ -19,13 +11,13 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 -- Constants
-local BACKGROUND_COLOR = Color3.new(0, 0, 0) -- Pure black
-local TEXT_COLOR = Color3.fromRGB(0, 204, 0) -- CMD green
-local FONT = Enum.Font.Code -- Closest to Lucida Console
+local BACKGROUND_COLOR = Color3.new(0, 0, 0)
+local TEXT_COLOR = Color3.fromRGB(0, 204, 0)
+local FONT = Enum.Font.Code
 local TITLE_BAR_HEIGHT = 30
 local WINDOW_SIZE = UDim2.new(0, 800, 0, 600)
 
--- ASCII Art for boot screen
+-- ASCII Art
 local ASCII_ART = [[
   ██████╗███╗   ███╗██████╗     ██╗   ██╗██╗
  ██╔════╝████╗ ████║██╔══██╗    ██║   ██║██║
@@ -37,39 +29,27 @@ local ASCII_ART = [[
            made by m0dzn
 ]]
 
--- Create new CMD UI instance
 function CMDUILibrary.new(title)
     local self = setmetatable({}, CMDUILibrary)
-    
     self.Title = title or "CMD"
     self.IsReady = false
     self.CurrentInput = nil
     self.InputConnection = nil
-    
-    -- Create UI
     self:CreateUI()
-    
-    -- Run boot sequence
-    task.spawn(function()
-        self:BootSequence()
-    end)
-    
+    task.spawn(function() self:BootSequence() end)
     return self
 end
 
--- Create the main UI structure
 function CMDUILibrary:CreateUI()
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
     
-    -- Main ScreenGui
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = "CMDUI"
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.Parent = playerGui
     
-    -- Main Frame (Window)
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "Window"
     self.MainFrame.Size = WINDOW_SIZE
@@ -80,15 +60,13 @@ function CMDUILibrary:CreateUI()
     self.MainFrame.BorderColor3 = Color3.fromRGB(128, 128, 128)
     self.MainFrame.Parent = self.ScreenGui
     
-    -- Title Bar
     self.TitleBar = Instance.new("Frame")
     self.TitleBar.Name = "TitleBar"
     self.TitleBar.Size = UDim2.new(1, 0, 0, TITLE_BAR_HEIGHT)
-    self.TitleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 128) -- Classic CMD blue
+    self.TitleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 128)
     self.TitleBar.BorderSizePixel = 0
     self.TitleBar.Parent = self.MainFrame
     
-    -- Title Text
     self.TitleLabel = Instance.new("TextLabel")
     self.TitleLabel.Name = "Title"
     self.TitleLabel.Size = UDim2.new(1, -10, 1, 0)
@@ -101,7 +79,6 @@ function CMDUILibrary:CreateUI()
     self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.TitleLabel.Parent = self.TitleBar
     
-    -- Content Frame (Scrolling)
     self.ContentFrame = Instance.new("ScrollingFrame")
     self.ContentFrame.Name = "Content"
     self.ContentFrame.Size = UDim2.new(1, -10, 1, -TITLE_BAR_HEIGHT - 10)
@@ -113,17 +90,14 @@ function CMDUILibrary:CreateUI()
     self.ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     self.ContentFrame.Parent = self.MainFrame
     
-    -- UIListLayout for content
     self.ContentLayout = Instance.new("UIListLayout")
     self.ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
     self.ContentLayout.Padding = UDim.new(0, 0)
     self.ContentLayout.Parent = self.ContentFrame
     
-    -- Make draggable
     self:MakeDraggable()
 end
 
--- Make window draggable
 function CMDUILibrary:MakeDraggable()
     local dragging = false
     local dragInput, mousePos, framePos
@@ -133,7 +107,6 @@ function CMDUILibrary:MakeDraggable()
             dragging = true
             mousePos = input.Position
             framePos = self.MainFrame.Position
-            
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -151,28 +124,16 @@ function CMDUILibrary:MakeDraggable()
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - mousePos
-            self.MainFrame.Position = UDim2.new(
-                framePos.X.Scale,
-                framePos.X.Offset + delta.X,
-                framePos.Y.Scale,
-                framePos.Y.Offset + delta.Y
-            )
+            self.MainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
         end
     end)
 end
 
--- Boot sequence with loading animation
 function CMDUILibrary:BootSequence()
     local startTime = tick()
-    local loadTime = math.random(1000, 2000) / 1000 -- Random between 1.000-2.000 seconds
-    
-    -- Display ASCII art with rainbow gradient
+    local loadTime = math.random(1000, 2000) / 1000
     local asciiLabel = self:CreateRainbowText(ASCII_ART, 12)
-    
-    -- Loading bar
     local loadingLabel = self:CreateText("UI Loading [                    ] 0%", TEXT_COLOR)
-    
-    -- Animate loading
     local steps = 20
     local stepTime = loadTime / steps
     
@@ -181,27 +142,18 @@ function CMDUILibrary:BootSequence()
         local filled = math.floor(progress * 20)
         local bar = string.rep("#", filled) .. string.rep(" ", 20 - filled)
         local percentage = math.floor(progress * 100)
-        
         loadingLabel.Text = string.format("UI Loading [%s] %d%%", bar, percentage)
         task.wait(stepTime)
     end
     
-    -- Display completion time
     local actualTime = tick() - startTime
     local completionLabel = self:CreateText(string.format("Load UI in %.3f sec", actualTime), TEXT_COLOR)
-    
     task.wait(0.5)
-    
-    -- Clear boot screen
     self:Clear()
-    
-    -- Show main interface
     self:ShowMainInterface()
-    
     self.IsReady = true
 end
 
--- Create rainbow text with gradient
 function CMDUILibrary:CreateRainbowText(text, textSize)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 0)
@@ -215,7 +167,6 @@ function CMDUILibrary:CreateRainbowText(text, textSize)
     label.AutomaticSize = Enum.AutomaticSize.Y
     label.Parent = self.ContentFrame
     
-    -- Add rainbow gradient
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new{
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
@@ -228,7 +179,6 @@ function CMDUILibrary:CreateRainbowText(text, textSize)
     }
     gradient.Parent = label
     
-    -- Animate gradient
     task.spawn(function()
         while label.Parent do
             for i = 0, 1, 0.01 do
@@ -241,7 +191,6 @@ function CMDUILibrary:CreateRainbowText(text, textSize)
     return label
 end
 
--- Create normal text label
 function CMDUILibrary:CreateText(text, color)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 0)
@@ -254,19 +203,15 @@ function CMDUILibrary:CreateText(text, color)
     label.TextYAlignment = Enum.TextYAlignment.Top
     label.AutomaticSize = Enum.AutomaticSize.Y
     label.Parent = self.ContentFrame
-    
     return label
 end
 
--- Show main interface header
 function CMDUILibrary:ShowMainInterface()
-    -- Big title
     self:CreateText("\n" .. string.rep(" ", 10) .. self.Title, TEXT_COLOR)
     self:CreateText(string.rep("-", 50), TEXT_COLOR)
-    self:CreateText("", TEXT_COLOR) -- Empty line
+    self:CreateText("", TEXT_COLOR)
 end
 
--- Clear all content
 function CMDUILibrary:Clear()
     for _, child in ipairs(self.ContentFrame:GetChildren()) do
         if child:IsA("TextLabel") or child:IsA("TextBox") then
@@ -275,29 +220,20 @@ function CMDUILibrary:Clear()
     end
 end
 
--- Update title
 function CMDUILibrary:SetTitle(newTitle)
     self.Title = newTitle
     self.TitleLabel.Text = newTitle
-    
-    -- Update header in content
     self:Clear()
     self:ShowMainInterface()
 end
 
--- Print text to console
 function CMDUILibrary:Print(text, color)
     self:CreateText(text, color or TEXT_COLOR)
-    
-    -- Auto-scroll to bottom
     self.ContentFrame.CanvasPosition = Vector2.new(0, self.ContentFrame.AbsoluteCanvasSize.Y)
 end
 
--- Wait for user input
 function CMDUILibrary:WaitForInput(prompt)
     self:Print(prompt)
-    
-    -- Create input box
     local inputBox = Instance.new("TextBox")
     inputBox.Size = UDim2.new(1, -5, 0, 20)
     inputBox.BackgroundColor3 = BACKGROUND_COLOR
@@ -309,12 +245,9 @@ function CMDUILibrary:WaitForInput(prompt)
     inputBox.TextXAlignment = Enum.TextXAlignment.Left
     inputBox.ClearTextOnFocus = false
     inputBox.Parent = self.ContentFrame
-    
-    -- Focus the input
     task.wait(0.1)
     inputBox:CaptureFocus()
     
-    -- Wait for Enter key
     local result = nil
     local connection
     connection = inputBox.FocusLost:Connect(function(enterPressed)
@@ -327,18 +260,11 @@ function CMDUILibrary:WaitForInput(prompt)
         end
     end)
     
-    -- Wait for result
-    while result == nil do
-        task.wait(0.1)
-    end
-    
-    -- Echo the input
+    while result == nil do task.wait(0.1) end
     self:Print("> " .. result, Color3.fromRGB(0, 255, 0))
-    
     return result
 end
 
--- Select by number
 function CMDUILibrary:SelectByNumber(prompt, options)
     if type(options) ~= "table" or #options == 0 then
         error("Options must be a non-empty table")
@@ -346,18 +272,15 @@ function CMDUILibrary:SelectByNumber(prompt, options)
     
     self:Print("")
     self:Print(prompt)
-    
     for i, option in ipairs(options) do
         self:Print(string.format("  [%d] %s", i, option))
     end
-    
     self:Print("")
     
     local input = nil
     while input == nil do
         local rawInput = self:WaitForInput("Type number to select: ")
         local num = tonumber(rawInput)
-        
         if num and num >= 1 and num <= #options then
             input = num
         else
@@ -368,16 +291,13 @@ function CMDUILibrary:SelectByNumber(prompt, options)
     return input, options[input]
 end
 
--- Confirm (Y/N)
 function CMDUILibrary:Confirm(prompt)
     self:Print("")
     self:Print(prompt)
-    
     local result = nil
     while result == nil do
         local input = self:WaitForInput("Type Y/N: ")
         local lower = string.lower(input)
-        
         if lower == "y" or lower == "yes" then
             result = true
         elseif lower == "n" or lower == "no" then
@@ -386,19 +306,15 @@ function CMDUILibrary:Confirm(prompt)
             self:Print("Invalid input. Please type Y or N.", Color3.fromRGB(255, 0, 0))
         end
     end
-    
     return result
 end
 
--- General input
 function CMDUILibrary:Input(prompt, inputType)
     self:Print("")
     self:Print(prompt)
-    
     local result = nil
     while result == nil do
         local input = self:WaitForInput((inputType == "number" and "Type number to set value: ") or "Type value: ")
-        
         if inputType == "number" then
             local num = tonumber(input)
             if num then
@@ -410,26 +326,16 @@ function CMDUILibrary:Input(prompt, inputType)
             result = input
         end
     end
-    
     return result
 end
 
--- Wait until ready
 function CMDUILibrary:WaitForReady()
-    while not self.IsReady do
-        task.wait(0.1)
-    end
+    while not self.IsReady do task.wait(0.1) end
 end
 
--- Destroy UI
 function CMDUILibrary:Destroy()
-    if self.InputConnection then
-        self.InputConnection:Disconnect()
-    end
-    
-    if self.ScreenGui then
-        self.ScreenGui:Destroy()
-    end
+    if self.InputConnection then self.InputConnection:Disconnect() end
+    if self.ScreenGui then self.ScreenGui:Destroy() end
 end
 
 return CMDUILibrary
