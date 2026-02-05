@@ -4,7 +4,7 @@
     This shows different ways to load and use the CMD UI Library with loadstring
 ]]
 
-local CMDUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
+local CMDUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/m0dzn1/Roblox-CMD-UI-library/refs/heads/main/CMDUILibrary.lua"))()
 
 -- Create UI
 local cmdUI = CMDUI.new("Example App")
